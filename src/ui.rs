@@ -130,7 +130,8 @@ pub fn draw_main_ui(f: &mut ratatui::Frame, state: &mut AppState) {
     f.render_stateful_widget(folders, chunks[0], &mut state.label_state);
 
     // Middle: Message list
-    let msg_items: Vec<_> = if state.loading_messages {
+    let msg_items: Vec<_> = if state.loading_messages && state.messages.is_empty() {
+        // Only show loading if we have no cached messages to display
         vec![
             ListItem::new(""),
             ListItem::new("📧 Loading messages..."),
