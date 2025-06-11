@@ -19,7 +19,3 @@ pub use operations::{archive_message, delete_message, send_email};
 
 // Re-export auth constants
 pub use auth::{KEYRING_SERVICE_NAME, KEYRING_USERNAME};
-
-// Re-export traits for testing (when needed)
-#[cfg(test)]
-pub use auth::{KeyringEntry, OAuthFlow, RealOAuthFlow};
