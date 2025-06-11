@@ -1,8 +1,8 @@
-# rmail
+# tuimail
 
 A terminal-based email client for Gmail.
 
-**Note:** This project is currently under active development and is not yet production-ready. While bug reports are welcome, due to the early stage of development and the maintainer's evolving Rust skills, it is highly recommended that any bug reports be accompanied by a pull request with a proposed fix. Your contributions are greatly appreciated!
+**Note:** This project is currently under active (sort of?) development and is not yet production-ready. While bug reports are welcome, due to the early stage of development and the maintainer's evolving Rust skills, it is highly recommended that any bug reports be accompanied by a pull request with a proposed fix. Your contributions are greatly appreciated!
 
 ## Setup
 
@@ -57,7 +57,7 @@ To clear the stored client secret and token, run the application with the `--cle
 cargo run --release -- --clear-keyring
 ```
 
-This command will delete the `client_secret.json` and token entries from your keyring. After running this, you will need to re-authenticate the next time you run `rmail` normally, which will prompt you to go through the OAuth flow again. This effectively resets your authentication state.
+This command will delete the `client_secret.json` and token entries from your keyring. After running this, you will need to re-authenticate the next time you run `tuimail` normally, which will prompt you to go through the OAuth flow again. This effectively resets your authentication state.
 
 ## Contributing
 
@@ -65,10 +65,34 @@ This project was initially developed by someone with limited prior experience in
 
 We welcome any improvements, including:
 
-*   **Rust Best Practices**: Refactoring code to align with idiomatic Rust patterns and conventions.
-*   **Performance Enhancements**: Optimizations to improve the application's speed and efficiency.
-*   **Feature Additions**: New functionalities to enhance the user experience.
-*   **Bug Fixes**: Addressing any issues or unexpected behavior.
-*   **Documentation**: Improving existing documentation or adding new explanations.
+* **Rust Best Practices**: Refactoring code to align with idiomatic Rust patterns and conventions.
+* **Performance Enhancements**: Optimizations to improve the application's speed and efficiency.
+* **Feature Additions**: New functionalities to enhance the user experience.
+* **Bug Fixes**: Addressing any issues or unexpected behavior.
+* **Documentation**: Improving existing documentation or adding new explanations.
 
-Feel free to open issues or pull requests. Your contributions will help make `rmail` a more robust and user-friendly application.
+Feel free to open issues or pull requests. Your contributions will help make `tuimail` a more robust and user-friendly application.
+
+Please note that we treat compiler warnings like errors here.  If your PR is emitting warnings, it will not be merged (unless it is an emergency security patch).
+
+## Code of Conduct
+
+We are committed to providing a welcoming and inclusive environment for all contributors. Everyone is welcome to participate in this project regardless of their background, experience level, or identity.
+
+### Our Values
+
+* **All Contributors Welcome**: Whether you're a seasoned Rust developer or just getting started, your contributions are valued and appreciated.
+* **Assume Good Intentions**: We approach all interactions with the assumption that contributors have good intentions and are acting in good faith.
+* **Kindness First**: We prioritize kindness and respect in all communications. Disagreements should focus on ideas and code, not personal attacks.
+* **Learning Together**: We recognize that everyone is learning and growing (including our lead developer). Mistakes are opportunities for improvement, not reasons for criticism.
+* **Constructive Feedback**: When providing feedback, we aim to be helpful and constructive, offering suggestions for improvement rather than just pointing out problems.
+
+### Expected Behavior
+
+* Be respectful and considerate in all interactions
+* Provide helpful and constructive feedback
+* Be patient with contributors who are learning
+* Assume positive intent when interpreting communications
+* Focus on what is best for the community and the project
+
+We believe that by fostering a kind and welcoming community, we can create better software together. Thank you for helping to make this project a positive experience for everyone.
