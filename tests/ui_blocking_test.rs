@@ -3,10 +3,10 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::time::Duration;
 
-use rmail::background_tasks::spawn_message_fetch_with_cache;
-use rmail::database::{CachedMessage, Database};
-use rmail::state::AppState;
-use rmail::types::Label;
+use tuimail::background_tasks::spawn_message_fetch_with_cache;
+use tuimail::database::{CachedMessage, Database};
+use tuimail::state::AppState;
+use tuimail::types::Label;
 
 #[tokio::test]
 async fn test_ui_never_blocks_on_cached_data() {

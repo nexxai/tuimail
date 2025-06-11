@@ -2,9 +2,9 @@ use chrono::Utc;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use rmail::database::{CachedMessage, Database};
-use rmail::state::AppState;
-use rmail::types::Label;
+use tuimail::database::{CachedMessage, Database};
+use tuimail::state::AppState;
+use tuimail::types::Label;
 
 #[tokio::test]
 async fn test_no_api_loop_with_fresh_cache() {

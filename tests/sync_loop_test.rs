@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 
-use rmail::database::CachedMessage;
-use rmail::state::AppState;
-use rmail::types::{Label, Message};
+use tuimail::database::CachedMessage;
+use tuimail::state::AppState;
+use tuimail::types::{Label, Message};
 
 // Placeholder sync types since sync module is removed
 #[derive(Clone, Debug)]

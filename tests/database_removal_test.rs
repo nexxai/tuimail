@@ -1,8 +1,8 @@
-use rmail::database::Database;
-use rmail::state::AppState;
-use rmail::types::Label;
 use std::fs;
 use std::sync::Arc;
+use tuimail::database::Database;
+use tuimail::state::AppState;
+use tuimail::types::Label;
 
 #[tokio::test]
 async fn test_app_initialization_with_missing_database() {
@@ -85,7 +85,7 @@ async fn test_message_fetch_error_handling() {
 
     // Test fetching with invalid token should not crash
     // This will fail the API call but shouldn't panic
-    rmail::gmail_api::fetch_messages_for_label(&mut state).await;
+    tuimail::gmail_api::fetch_messages_for_label(&mut state).await;
 
     // The state should remain in a consistent state even after API failure
     assert!(
@@ -170,7 +170,7 @@ async fn test_fetch_messages_for_label_with_empty_response() {
 
     // This should return None due to authentication failure
     // The function should handle this gracefully
-    rmail::gmail_api::fetch_messages_for_label(&mut state).await;
+    tuimail::gmail_api::fetch_messages_for_label(&mut state).await;
 
     // Verify state remains consistent
     assert!(

@@ -1,9 +1,9 @@
-use rmail::database::Database;
-use rmail::gmail_api::fetch_messages_for_label;
-use rmail::state::AppState;
-use rmail::types::Label;
 use std::fs;
 use std::sync::Arc;
+use tuimail::database::Database;
+use tuimail::gmail_api::fetch_messages_for_label;
+use tuimail::state::AppState;
+use tuimail::types::Label;
 
 #[tokio::test]
 async fn test_error_message_on_api_failure_after_database_removal() {

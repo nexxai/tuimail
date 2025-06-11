@@ -229,6 +229,11 @@ pub async fn handle_key_event(
             handle_archive_message(&mut state_guard).await
         }
 
+        // Archive message with Backspace key (only in Messages and Content panes)
+        KeyCode::Backspace if !state_guard.composing => {
+            handle_archive_message(&mut state_guard).await
+        }
+
         // Delete message with 'd' key (only in Messages and Content panes)
         KeyCode::Char('d') if !state_guard.composing => {
             handle_delete_message(&mut state_guard).await
