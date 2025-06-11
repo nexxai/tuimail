@@ -13,12 +13,59 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
       - name: Run tests
         run: cargo test
 
+  version:
+    name: Bump Version
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: bump
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(cargo pkgid -p rmail | cut -d '#' -f 2)
+          echo "Current version: $CURRENT_VERSION"
+
+          # Bump patch version
+          cargo set-version --bump patch
+
+          # Get new version
+          NEW_VERSION=$(cargo pkgid -p rmail | cut -d '#' -f 2)
+          echo "New version: $NEW_VERSION"
+
+          # Commit the version bump
+          git add Cargo.toml Cargo.lock
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git push
+
+          # Set output
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
   build:
     name: Build ${{ matrix.platform }}
-    needs: test
+    needs: version
     strategy:
       matrix:
         include:
@@ -45,6 +92,11 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
 
@@ -66,24 +118,9 @@ jobs:
 
   release:
     name: Create Release
-    needs: build
+    needs: [build, version]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install cargo-edit
-        run: cargo install cargo-edit
-
-      - name: Get current version
-        id: get_version
-        run: echo "CURRENT_VERSION=$(cargo pkgid -p rmail | cut -d '#' -f 2)" >> $GITHUB_OUTPUT
-
-      - name: Increment version
-        run: |
-          cargo set-version --bump patch
-          echo "NEW_VERSION=$(cargo pkgid -p rmail | cut -d '#' -f 2)" >> $GITHUB_ENV
-
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -99,8 +136,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ env.NEW_VERSION }}
-          name: Release v${{ env.NEW_VERSION }}
+          tag_name: v${{ needs.version.outputs.new_version }}
+          name: Release v${{ needs.version.outputs.new_version }}
           draft: false
           prerelease: false
           files: |
