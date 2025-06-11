@@ -294,7 +294,7 @@ fn draw_main_ui_base(f: &mut ratatui::Frame, state: &mut AppState) {
             FocusedPane::Messages => vec![
                 "j/k or ↑/↓: Navigate up/down through messages",
                 "Enter: View message content | c: Compose email | r: Reply to message",
-                "a: Archive message | d: Delete message | f: Refresh messages",
+                "a: Archive message | d: Delete message | s: Mark as spam | f: Refresh messages",
                 "Tab/Shift+Tab: Switch panes | Esc: Back to folders",
                 "Ctrl+R: Re-authenticate | ?: Toggle this help | q: Quit application",
             ]
@@ -302,7 +302,7 @@ fn draw_main_ui_base(f: &mut ratatui::Frame, state: &mut AppState) {
             FocusedPane::Content => vec![
                 "j/k or ↑/↓: Scroll up/down through content",
                 "Tab/Shift+Tab: Switch panes | c: Compose email | r: Reply to message",
-                "a: Archive message | d: Delete message | f: Refresh messages",
+                "a: Archive message | d: Delete message | s: Mark as spam | f: Refresh messages",
                 "Esc: Back to folders pane",
                 "Ctrl+R: Re-authenticate | ?: Toggle this help | q: Quit application",
             ]

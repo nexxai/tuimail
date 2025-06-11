@@ -119,3 +119,37 @@ pub async fn delete_message(
         Err(format!("Failed to delete message: {}", error_text).into())
     }
 }
+
+// Mark a message as spam by adding the SPAM label and removing INBOX
+pub async fn spam_message(
+    state: &AppState,
+    message_id: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let modify_url = format!(
+        "https://gmail.googleapis.com/gmail/v1/users/me/messages/{}/modify",
+        message_id
+    );
+
+    let request_body = serde_json::json!({
+        "addLabelIds": ["SPAM"],
+        "removeLabelIds": ["INBOX"]
+    });
+
+    let response = state
+        .client
+        .post(&modify_url)
+        .bearer_auth(&state.token)
+        .json(&request_body)
+        .send()
+        .await?;
+
+    if response.status().is_success() {
+        Ok(())
+    } else {
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error".to_string());
+        Err(format!("Failed to mark message as spam: {}", error_text).into())
+    }
+}

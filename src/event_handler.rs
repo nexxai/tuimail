@@ -239,6 +239,9 @@ pub async fn handle_key_event(
             handle_delete_message(&mut state_guard).await
         }
 
+        // Mark message as spam with 's' key (only in Messages and Content panes)
+        KeyCode::Char('s') if !state_guard.composing => handle_spam_message(&mut state_guard).await,
+
         _ => Ok(false),
     }
 }
@@ -666,6 +669,50 @@ async fn handle_delete_message(
                         } else {
                             state_guard
                                 .set_error_message(format!("Failed to delete message: {}", e));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(false)
+}
+
+async fn handle_spam_message(
+    state_guard: &mut AppState,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    if matches!(
+        state_guard.focused_pane,
+        FocusedPane::Messages | FocusedPane::Content
+    ) {
+        let selected_message = state_guard.selected_message;
+        if let Some(msg) = state_guard.messages.get(selected_message) {
+            if let Some(msg_id) = &msg.id {
+                // Actually call the Gmail API to mark the message as spam
+                match crate::gmail_api::spam_message(state_guard, msg_id).await {
+                    Ok(()) => {
+                        // Success - remove from UI
+                        state_guard.messages.remove(selected_message);
+                        if state_guard.selected_message >= state_guard.messages.len()
+                            && state_guard.selected_message > 0
+                        {
+                            state_guard.selected_message = state_guard.messages.len() - 1;
+                        }
+                        state_guard.update_message_state();
+                    }
+                    Err(e) => {
+                        let error_msg = e.to_string();
+                        if error_msg.contains("401") || error_msg.contains("invalid authentication")
+                        {
+                            state_guard.set_error_message(
+                                "Authentication expired. Press Ctrl+R to re-authenticate."
+                                    .to_string(),
+                            );
+                        } else {
+                            state_guard.set_error_message(format!(
+                                "Failed to mark message as spam: {}",
+                                e
+                            ));
                         }
                     }
                 }
