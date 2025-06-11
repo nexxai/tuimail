@@ -65,12 +65,22 @@ pub fn draw_main_ui(f: &mut ratatui::Frame, state: &mut AppState) {
     // Update screen size for pagination calculations
     state.update_screen_size(f.size().height);
 
+    // If there's a client secret deletion prompt, draw it as a popup over everything else
+    if state.client_secret_deletion_prompt {
+        draw_main_ui_base(f, state);
+        draw_client_secret_confirmation_popup(f, state);
+        return; // Don't draw other overlays if confirmation popup is active
+    }
+
     // If there's an error message, draw it as a popup over everything else
     if state.error_message.is_some() {
         draw_error_popup(f, state);
         return; // Don't draw main UI if error popup is active
     }
 
+    draw_main_ui_base(f, state);
+}
+fn draw_main_ui_base(f: &mut ratatui::Frame, state: &mut AppState) {
     // Create main layout with optional help bar at bottom
     let main_chunks = if state.show_help {
         Layout::default()
@@ -333,6 +343,29 @@ pub fn draw_error_popup(f: &mut ratatui::Frame, state: &mut AppState) {
 
         f.render_widget(paragraph, popup_area);
     }
+}
+
+// Draw client secret deletion confirmation popup
+pub fn draw_client_secret_confirmation_popup(f: &mut ratatui::Frame, _state: &mut AppState) {
+    let area = f.size();
+    let popup_area = centered_rect(70, 30, area); // 70% width, 30% height
+
+    f.render_widget(Clear, popup_area); // Clear the area first
+
+    let block = Block::default()
+        .title("🔐 Security Notice")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(Color::Yellow));
+
+    let message = "Your client secret has been securely stored in your system's keyring.\n\nFor security reasons, you should delete the client_secret.json file.\n\nWould you like to delete it now?\n\nPress 'y' for Yes, 'n' for No";
+
+    let paragraph = Paragraph::new(message)
+        .block(block)
+        .style(Style::default().fg(Color::White))
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true });
+
+    f.render_widget(paragraph, popup_area);
 }
 
 pub fn draw_compose_ui(f: &mut ratatui::Frame, state: &mut AppState) {

@@ -107,6 +107,8 @@ pub struct AppState {
     pub use_local_cache: bool,
     // Error message for display
     pub error_message: Option<String>,
+    // Confirmation dialog for client_secret.json deletion
+    pub client_secret_deletion_prompt: bool,
 }
 
 impl AppState {
@@ -141,6 +143,7 @@ impl AppState {
             database: None,
             use_local_cache: false,
             error_message: None, // Initialize error message as None
+            client_secret_deletion_prompt: false,
         }
     }
 

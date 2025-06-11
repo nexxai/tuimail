@@ -137,11 +137,11 @@ async fn perform_oauth_flow<K: KeyringEntry, O: OAuthFlow>(
 // Helper function to load the client secret
 async fn load_client_secret<K: KeyringEntry>(
     credentials_keyring: &K,
-) -> Result<ApplicationSecret, Box<dyn std::error::Error>> {
+) -> Result<(ApplicationSecret, bool), Box<dyn std::error::Error>> {
     // Try to load from consolidated credentials first
     if let Ok(credentials) = load_secure_credentials(credentials_keyring).await {
         if let Some(secret) = credentials.client_secret {
-            return Ok(secret);
+            return Ok((secret, false)); // From keyring, not from file
         }
     }
 
@@ -157,7 +157,7 @@ async fn load_client_secret<K: KeyringEntry>(
             if let Err(e) = save_secure_credentials(credentials_keyring, &credentials).await {
                 eprintln!("Failed to save client secret to keyring: {}", e);
             }
-            Ok(secret)
+            Ok((secret, true)) // From file
         }
         Err(e) => {
             eprintln!("Failed to read client_secret.json: {}", e);
@@ -167,8 +167,14 @@ async fn load_client_secret<K: KeyringEntry>(
     }
 }
 
+// Authentication result with additional info
+pub struct AuthResult {
+    pub token: String,
+    pub client_secret_loaded_from_file: bool,
+}
+
 // Main authentication function
-pub async fn try_authenticate() -> Result<String, Box<dyn std::error::Error>> {
+pub async fn try_authenticate() -> Result<AuthResult, Box<dyn std::error::Error>> {
     let credentials_keyring = Entry::new(KEYRING_SERVICE_NAME, KEYRING_USERNAME)?;
     let oauth_flow_impl = RealOAuthFlow;
 
@@ -178,16 +184,23 @@ pub async fn try_authenticate() -> Result<String, Box<dyn std::error::Error>> {
 async fn try_authenticate_internal<K: KeyringEntry, O: OAuthFlow>(
     credentials_keyring: &K,
     oauth_flow_impl: &O,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> Result<AuthResult, Box<dyn std::error::Error>> {
     let mut retry_count = 0;
+    let mut client_secret_from_file = false;
     loop {
-        let secret = load_client_secret(credentials_keyring).await?; // Load secret
+        let (secret, from_file) = load_client_secret(credentials_keyring).await?; // Load secret
+        if from_file {
+            client_secret_from_file = true;
+        }
 
         // Try to retrieve token from consolidated credentials first
         if retry_count == 0 {
             if let Ok(credentials) = load_secure_credentials(credentials_keyring).await {
                 if let Some(token) = credentials.token {
-                    return Ok(token); // Success
+                    return Ok(AuthResult {
+                        token,
+                        client_secret_loaded_from_file: client_secret_from_file,
+                    }); // Success
                 }
             }
         }
@@ -195,7 +208,10 @@ async fn try_authenticate_internal<K: KeyringEntry, O: OAuthFlow>(
         // If no token in keyring or it's a retry attempt, perform OAuth flow
         match perform_oauth_flow(oauth_flow_impl, secret, credentials_keyring).await {
             Ok(token_string) => {
-                return Ok(token_string); // Success
+                return Ok(AuthResult {
+                    token: token_string,
+                    client_secret_loaded_from_file: client_secret_from_file,
+                }); // Success
             }
             Err(e) => {
                 eprintln!("Authentication failed: {}", e);

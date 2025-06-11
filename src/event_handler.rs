@@ -11,6 +11,35 @@ pub async fn handle_key_event(
 ) -> Result<bool, Box<dyn std::error::Error>> {
     let mut state_guard = state_arc.write().await;
 
+    // Handle client secret deletion prompt
+    if state_guard.client_secret_deletion_prompt {
+        match key.code {
+            KeyCode::Char('y') | KeyCode::Char('Y') => {
+                // Delete the file
+                if std::fs::remove_file("client_secret.json").is_ok() {
+                    state_guard
+                        .set_error_message("✅ client_secret.json has been deleted.".to_string());
+                } else {
+                    state_guard.set_error_message(
+                        "❌ Failed to delete client_secret.json. Please delete it manually."
+                            .to_string(),
+                    );
+                }
+                state_guard.client_secret_deletion_prompt = false;
+            }
+            KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                // Don't delete, just dismiss
+                state_guard.set_error_message(
+                    "⚠️ Please remember to delete client_secret.json manually for security."
+                        .to_string(),
+                );
+                state_guard.client_secret_deletion_prompt = false;
+            }
+            _ => {} // Ignore other keys while prompt is showing
+        }
+        return Ok(false); // Don't quit
+    }
+
     // Clear error message on any key press if an error is displayed
     if state_guard.error_message.is_some() {
         state_guard.clear_error_message();
@@ -77,8 +106,12 @@ pub async fn handle_key_event(
 
             // Try to re-authenticate
             match try_authenticate().await {
-                Ok(new_token) => {
-                    state_guard.token = new_token;
+                Ok(auth_result) => {
+                    state_guard.token = auth_result.token;
+                    // If client secret was loaded from file, set flag for TUI prompt
+                    if auth_result.client_secret_loaded_from_file {
+                        state_guard.client_secret_deletion_prompt = true;
+                    }
 
                     // After successful re-authentication, retry fetching labels
                     match crate::gmail_api::fetch_labels(&state_guard).await {

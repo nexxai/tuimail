@@ -24,8 +24,13 @@ pub async fn initialize_app(
     state.set_database(db.clone());
 
     // Authenticate
-    let token = try_authenticate().await?;
-    state.token = token;
+    let auth_result = try_authenticate().await?;
+    state.token = auth_result.token;
+
+    // If client secret was loaded from file, set flag for TUI prompt
+    if auth_result.client_secret_loaded_from_file {
+        state.client_secret_deletion_prompt = true;
+    }
 
     // Initialize notification system
     let state_arc = Arc::new(RwLock::new(state));
