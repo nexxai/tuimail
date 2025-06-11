@@ -74,10 +74,7 @@ pub struct MessagePartBody {
 }
 
 #[derive(Debug, PartialEq)]
-#[allow(dead_code)]
 pub enum LoadingStage {
     Authenticating,
     FetchingLabels,
-    FetchingMessages,
-    Complete,
 }

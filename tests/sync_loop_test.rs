@@ -5,8 +5,18 @@ use tokio::sync::{mpsc, RwLock};
 
 use rmail::database::CachedMessage;
 use rmail::state::AppState;
-use rmail::sync::{SyncCommand, SyncEvent};
 use rmail::types::{Label, Message};
+
+// Placeholder sync types since sync module is removed
+#[derive(Clone, Debug)]
+pub enum SyncCommand {
+    SyncLabel(String),
+}
+
+#[derive(Clone, Debug)]
+pub enum SyncEvent {
+    LabelSynced(String, usize),
+}
 
 // Mock database for testing
 #[derive(Clone)]

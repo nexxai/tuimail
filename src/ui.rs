@@ -27,8 +27,6 @@ pub fn draw_loading_screen(f: &mut ratatui::Frame, stage: &LoadingStage) {
     let message = match stage {
         LoadingStage::Authenticating => "🔐 Authenticating with Gmail...",
         LoadingStage::FetchingLabels => "📁 Loading folders...",
-        LoadingStage::FetchingMessages => "📧 Loading messages...",
-        LoadingStage::Complete => "✅ Ready!",
     };
 
     let loading_text = Paragraph::new(message)
