@@ -103,7 +103,9 @@ impl SyncService {
             if let Some(state) = sync_state {
                 let time_since_sync = Utc::now() - state.last_sync;
                 if time_since_sync.num_minutes() < 5 {
-                    // Skip if synced recently
+                    // Skip if synced recently - send cache updated event to refresh UI with cached data
+                    drop(app_state);
+                    let _ = self.event_tx.send(SyncEvent::CacheUpdated).await;
                     return;
                 }
             }
