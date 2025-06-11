@@ -19,6 +19,7 @@ keyring = "2.0.0"
 clap = { version = "4.0", features = ["derive"] }
 async-trait = "0.1.80" # Added for async trait mocking
 time = { version = "0.3", features = ["macros", "formatting", "parsing"] } # Removed chrono feature as it's not available
+lazy_static = "1.4"
 
 [dev-dependencies]
 mockall = "0.12.1"
