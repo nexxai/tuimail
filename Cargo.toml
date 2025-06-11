@@ -1,0 +1,24 @@
+[package]
+name = "rmail"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ratatui = "0.26"
+crossterm = "0.27"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+yup-oauth2 = "9.0.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+keyring = "2.0.0"
+clap = { version = "4.0", features = ["derive"] }
+async-trait = "0.1.80" # Added for async trait mocking
+time = { version = "0.3", features = ["macros", "formatting", "parsing"] } # Removed chrono feature as it's not available
+
+[dev-dependencies]
+mockall = "0.12.1"

@@ -1,0 +1,13 @@
+pub mod app;
+pub mod background_tasks;
+pub mod cli;
+pub mod database;
+pub mod email_content;
+pub mod event_handler;
+pub mod gmail_api;
+pub mod notifications;
+pub mod state;
+pub mod sync;
+pub mod terminal;
+pub mod types;
+pub mod ui;

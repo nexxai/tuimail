@@ -1,0 +1,74 @@
+# rmail
+
+A terminal-based email client for Gmail.
+
+**Note:** This project is currently under active development and is not yet production-ready. While bug reports are welcome, due to the early stage of development and the maintainer's evolving Rust skills, it is highly recommended that any bug reports be accompanied by a pull request with a proposed fix. Your contributions are greatly appreciated!
+
+## Setup
+
+### Obtaining `client_secret.json`
+
+To use this application, you need to obtain a `client_secret.json` file from the Google Cloud Console. Follow these steps:
+
+1.  **Go to Google Cloud Console**: Navigate to [https://console.cloud.google.com/](https://console.cloud.google.com/).
+2.  **Create a New Project**:
+    *   Click on the project dropdown in the header (usually next to "Google Cloud").
+    *   Click "New Project".
+    *   Give your project a name (e.g., "rmail-client") and click "Create".
+3.  **Enable Gmail API**:
+    *   Once your project is created, go to the "APIs & Services" > "Library" section.
+    *   Search for "Gmail API" and select it.
+    *   Click "Enable".
+4.  **Configure OAuth Consent Screen**:
+    *   Go to "APIs & Services" > "OAuth consent screen".
+    *   Choose "External" for User Type and click "Create".
+    *   Fill in the required fields (App name, User support email, Developer contact information). You can use "rmail" for the app name.
+    *   For "Scopes", click "Add or Remove Scopes" and add `https://mail.google.com/` (Gmail API).
+    *   Save and continue through the remaining steps. For testing, you can add your Google account as a "Test user".
+5.  **Create Credentials (OAuth Client ID)**:
+    *   Go to "APIs & Services" > "Credentials".
+    *   Click "Create Credentials" > "OAuth client ID".
+    *   Select "Desktop app" as the Application type.
+    *   Give it a name (e.g., "rmail-desktop-client") and click "Create".
+    *   A dialog will appear with your client ID and client secret. Click "Download JSON" to download your `client_secret.json` file.
+6.  **Place `client_secret.json`**:
+    *   Place the downloaded `client_secret.json` file in the root directory of this project (where `Cargo.toml` is located).
+    *   The application will attempt to load this file. Once successfully loaded, it will be stored securely in your system's keyring, and you will be prompted to delete the `client_secret.json` file for security reasons.
+
+## Running the Application
+
+To run the application, ensure you have Rust and Cargo installed. Then, navigate to the project's root directory in your terminal and execute:
+
+```bash
+cargo run --release
+```
+
+The `--release` flag compiles the application with optimizations, resulting in better performance.
+
+## Troubleshooting
+
+### Clearing Keyring Credentials
+
+If you encounter issues with authentication, such as `invalid_grant` errors or problems with token refresh, it might be necessary to clear the stored credentials from your system's keyring. This can happen if your authentication token expires or becomes invalid.
+
+To clear the stored client secret and token, run the application with the `--clear-keyring` flag:
+
+```bash
+cargo run --release -- --clear-keyring
+```
+
+This command will delete the `client_secret.json` and token entries from your keyring. After running this, you will need to re-authenticate the next time you run `rmail` normally, which will prompt you to go through the OAuth flow again. This effectively resets your authentication state.
+
+## Contributing
+
+This project was initially developed by someone with limited prior experience in Rust. As such, the codebase may not adhere to all Rust best practices. Contributions are highly encouraged and greatly appreciated!
+
+We welcome any improvements, including:
+
+*   **Rust Best Practices**: Refactoring code to align with idiomatic Rust patterns and conventions.
+*   **Performance Enhancements**: Optimizations to improve the application's speed and efficiency.
+*   **Feature Additions**: New functionalities to enhance the user experience.
+*   **Bug Fixes**: Addressing any issues or unexpected behavior.
+*   **Documentation**: Improving existing documentation or adding new explanations.
+
+Feel free to open issues or pull requests. Your contributions will help make `rmail` a more robust and user-friendly application.
