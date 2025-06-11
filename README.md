@@ -47,6 +47,12 @@ The `--release` flag compiles the application with optimizations, resulting in b
 
 ## Troubleshooting
 
+### macOS Keychain Behavior
+
+**Important for macOS Users**: Each time you compile or run a new build of the application (e.g., with `cargo run` or `cargo build`), macOS will treat it as a different application due to the changed binary signature. This means you will be re-prompted for your keychain password and will need to select "Always Allow" to grant the application access to stored credentials.
+
+This is expected macOS behavior and not a bug. To minimize these prompts during development, you can use the same compiled binary multiple times rather than recompiling frequently.
+
 ### Clearing Keyring Credentials
 
 If you encounter issues with authentication, such as `invalid_grant` errors or problems with token refresh, it might be necessary to clear the stored credentials from your system's keyring. This can happen if your authentication token expires or becomes invalid.

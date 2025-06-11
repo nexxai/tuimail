@@ -128,6 +128,15 @@ pub async fn fetch_messages_for_label(state: &mut AppState) {
                 }
             }
 
+            // Update sync state to mark this label as recently synced
+            if let (Some(db), Some(label)) =
+                (&state.database, state.labels.get(state.selected_label))
+            {
+                if let Some(label_id) = &label.id {
+                    let _ = db.update_sync_state(label_id, None).await;
+                }
+            }
+
             // Also save to in-memory cache for compatibility
             state.cache_messages_for_label(state.selected_label, messages);
         }

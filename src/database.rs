@@ -338,7 +338,7 @@ impl Database {
         Ok(messages)
     }
 
-    // Sync state operations for compatibility with tests
+    // Sync state operations
     pub async fn update_sync_state(
         &self,
         label_id: &str,
@@ -359,6 +359,18 @@ impl Database {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn get_sync_state(
+        &self,
+        label_id: &str,
+    ) -> Result<Option<DateTime<Utc>>, sqlx::Error> {
+        let row = sqlx::query("SELECT last_sync FROM sync_state WHERE label_id = ?")
+            .bind(label_id)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(row.map(|r| r.get("last_sync")))
     }
 }
 

@@ -336,7 +336,6 @@ async fn test_background_sync_updates_cache() {
                 assert_eq!(label_id, "INBOX");
                 assert_eq!(count, 2);
             }
-            _ => panic!("Expected LabelSynced event"),
         }
     }
 

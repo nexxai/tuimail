@@ -2,4 +2,4 @@
 client_secret.json
 tokencache.json
 *.bak
-rmail.db
+*.db
