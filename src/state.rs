@@ -564,18 +564,10 @@ impl AppState {
     }
 
     // Check if cache is stale for a given label (older than 5 minutes)
-    pub async fn is_cache_stale(&self, label_id: &str) -> bool {
-        if let Some(db) = &self.database {
-            // Check sync state in database
-            if let Ok(Some(sync_state)) = db.get_sync_state(label_id).await {
-                let time_since_sync = chrono::Utc::now() - sync_state.last_sync;
-                time_since_sync.num_minutes() >= 5 // Consider stale if older than 5 minutes
-            } else {
-                true // No sync state means we should fetch
-            }
-        } else {
-            true // No database means we should always fetch
-        }
+    pub async fn is_cache_stale(&self, _label_id: &str) -> bool {
+        // Simplified cache staleness check - always consider cache potentially stale
+        // In a real implementation, this could track last fetch times
+        true
     }
 
     // Request sync for current label

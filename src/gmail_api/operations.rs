@@ -60,7 +60,6 @@ pub async fn send_email(
 }
 
 // Archive a message by removing the INBOX label
-#[allow(dead_code)]
 pub async fn archive_message(
     state: &AppState,
     message_id: &str,
@@ -94,7 +93,6 @@ pub async fn archive_message(
 }
 
 // Delete a message by moving it to trash
-#[allow(dead_code)]
 pub async fn delete_message(
     state: &AppState,
     message_id: &str,

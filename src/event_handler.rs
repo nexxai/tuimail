@@ -79,7 +79,40 @@ pub async fn handle_key_event(
             match try_authenticate().await {
                 Ok(new_token) => {
                     state_guard.token = new_token;
-                    state_guard.set_error_message("Re-authentication successful!".to_string());
+
+                    // After successful re-authentication, retry fetching labels
+                    match crate::gmail_api::fetch_labels(&state_guard).await {
+                        Ok(labels) => {
+                            state_guard.labels = labels;
+                            state_guard.filter_labels();
+                            state_guard.order_labels();
+
+                            if !state_guard.labels.is_empty() {
+                                state_guard.selected_label = 0;
+                                state_guard.update_label_state();
+                                state_guard.set_error_message(
+                                    "Re-authentication and label loading successful!".to_string(),
+                                );
+
+                                // Load messages for the first label
+                                drop(state_guard);
+                                crate::background_tasks::spawn_message_fetch_with_cache(
+                                    state_arc.clone(),
+                                );
+                            } else {
+                                state_guard.set_error_message(
+                                    "Re-authentication successful, but no labels found."
+                                        .to_string(),
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            state_guard.set_error_message(format!(
+                                "Re-authentication successful, but failed to load labels: {}",
+                                e
+                            ));
+                        }
+                    }
                 }
                 Err(e) => {
                     state_guard.set_error_message(format!("Re-authentication failed: {}", e));

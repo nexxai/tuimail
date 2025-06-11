@@ -133,7 +133,11 @@ pub async fn fetch_messages_for_label(state: &mut AppState) {
         }
         None => {
             // Failed to fetch messages from API - this could be due to authentication issues
-            // or network problems. We should propagate any authentication errors to the UI.
+            // or network problems. Set an error message for the UI to display.
+            state.set_error_message(
+                "Failed to fetch messages. Please check your internet connection and try again."
+                    .to_string(),
+            );
         }
     }
 }
@@ -288,43 +292,6 @@ pub async fn load_more_messages(state: &mut AppState) {
     }
 }
 
-// Background preload adjacent labels for smoother navigation
-#[allow(dead_code)]
-pub async fn preload_adjacent_labels(state: &mut AppState) {
-    let current_label = state.selected_label;
-
-    // Preload next label (higher priority)
-    if current_label + 1 < state.labels.len() {
-        let next_label_index = current_label + 1;
-        if !state.is_label_loaded(next_label_index) {
-            if let Some(messages) = fetch_messages_for_label_index(state, next_label_index).await {
-                state.cache_messages_for_label(next_label_index, messages);
-            }
-        }
-    }
-
-    // Preload previous label (lower priority)
-    if current_label > 0 {
-        let prev_label_index = current_label - 1;
-        if !state.is_label_loaded(prev_label_index) {
-            if let Some(messages) = fetch_messages_for_label_index(state, prev_label_index).await {
-                state.cache_messages_for_label(prev_label_index, messages);
-            }
-        }
-    }
-}
-
-// Helper function to fetch messages for a specific label index (for preloading)
-#[allow(dead_code)]
-async fn fetch_messages_for_label_index(
-    state: &AppState,
-    label_index: usize,
-) -> Option<Vec<Message>> {
-    // Use the paginated version with default batch size
-    fetch_messages_for_label_index_paginated(state, label_index, 0, state.messages_per_screen * 2)
-        .await
-}
-
 // Helper function to fetch messages for a specific label index with pagination
 async fn fetch_messages_for_label_index_paginated(
     state: &AppState,
@@ -349,44 +316,49 @@ async fn fetch_messages_for_label_index_paginated(
             )
         };
 
-        if let Ok(response) = state
+        match state
             .client
             .get(&messages_url)
             .bearer_auth(&state.token)
             .send()
             .await
         {
-            if response.status().is_success() {
-                if let Ok(messages_data) = response.json::<MessagesResponse>().await {
-                    let message_refs = messages_data.messages.unwrap_or_default();
-                    let mut messages = Vec::new();
+            Ok(response) => {
+                if response.status().is_success() {
+                    if let Ok(messages_data) = response.json::<MessagesResponse>().await {
+                        let message_refs = messages_data.messages.unwrap_or_default();
+                        let mut messages = Vec::new();
 
-                    // Skip messages we already have (offset) and take only what we need
-                    for msg_ref in message_refs.iter().skip(offset).take(limit) {
-                        if let Some(id) = &msg_ref.id {
-                            // Use metadata format to get headers (subject, from) immediately
-                            let message_url = format!(
-                                "https://gmail.googleapis.com/gmail/v1/users/me/messages/{}?format=metadata",
-                                id
-                            );
+                        // Skip messages we already have (offset) and take only what we need
+                        for msg_ref in message_refs.iter().skip(offset).take(limit) {
+                            if let Some(id) = &msg_ref.id {
+                                // Use metadata format to get headers (subject, from) immediately
+                                let message_url = format!(
+                                    "https://gmail.googleapis.com/gmail/v1/users/me/messages/{}?format=metadata",
+                                    id
+                                );
 
-                            if let Ok(msg_response) = state
-                                .client
-                                .get(&message_url)
-                                .bearer_auth(&state.token)
-                                .send()
-                                .await
-                            {
-                                if msg_response.status().is_success() {
-                                    if let Ok(message) = msg_response.json::<Message>().await {
-                                        messages.push(message);
+                                if let Ok(msg_response) = state
+                                    .client
+                                    .get(&message_url)
+                                    .bearer_auth(&state.token)
+                                    .send()
+                                    .await
+                                {
+                                    if msg_response.status().is_success() {
+                                        if let Ok(message) = msg_response.json::<Message>().await {
+                                            messages.push(message);
+                                        }
                                     }
                                 }
                             }
                         }
+                        return Some(messages);
                     }
-                    return Some(messages);
                 }
+            }
+            Err(_e) => {
+                return None;
             }
         }
     }
