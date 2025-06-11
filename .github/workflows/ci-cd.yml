@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   test:
     name: Run Tests
@@ -19,48 +23,70 @@ jobs:
         run: cargo test
 
   version:
-    name: Bump Version
+    name: Manage Version
     needs: test
     runs-on: ubuntu-latest
     outputs:
-      new_version: ${{ steps.bump.outputs.new_version }}
+      new_version: ${{ steps.version.outputs.new_version }}
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install cargo-edit
-        run: cargo install cargo-edit
-
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Bump version
-        id: bump
+      - name: Smart Version Management
+        id: version
         run: |
-          # Get current version
-          CURRENT_VERSION=$(cargo pkgid -p rmail | cut -d '#' -f 2)
-          echo "Current version: $CURRENT_VERSION"
+          # Check if Cargo.toml was modified in this commit
+          if git diff --name-only HEAD~1 HEAD | grep -q "^Cargo.toml$"; then
+            echo "Cargo.toml was modified in this commit"
+            
+            # Check if version line specifically was changed
+            if git diff HEAD~1 HEAD Cargo.toml | grep -q "^[+-]version = "; then
+              echo "Version was manually updated"
+              # Extract the current version from Cargo.toml
+              CURRENT_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+              echo "Using manually set version: $CURRENT_VERSION"
+              NEW_VERSION="$CURRENT_VERSION"
+              VERSION_BUMPED=false
+            else
+              echo "Cargo.toml changed but version wasn't - auto-bumping"
+              VERSION_BUMPED=true
+            fi
+          else
+            echo "Cargo.toml not modified - auto-bumping version"
+            VERSION_BUMPED=true
+          fi
 
-          # Bump patch version
-          cargo set-version --bump patch
+          if [ "$VERSION_BUMPED" = "true" ]; then
+            # Get current version from Cargo.toml
+            CURRENT_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+            echo "Current version: $CURRENT_VERSION"
+            
+            # Parse version parts (assuming semantic versioning: major.minor.patch)
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+            
+            # Bump patch version
+            NEW_PATCH=$((PATCH + 1))
+            NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+            
+            echo "Bumping version to: $NEW_VERSION"
+            
+            # Update Cargo.toml
+            sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" Cargo.toml
+            
+            # Commit the version bump
+            git add Cargo.toml
+            git commit -m "chore: bump version to $NEW_VERSION"
+            git push
+          fi
 
-          # Get new version
-          NEW_VERSION=$(cargo pkgid -p rmail | cut -d '#' -f 2)
-          echo "New version: $NEW_VERSION"
-
-          # Commit the version bump
-          git add Cargo.toml Cargo.lock
-          git commit -m "chore: bump version to $NEW_VERSION"
-          git push
-
-          # Set output
+          echo "Final version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
   build:
