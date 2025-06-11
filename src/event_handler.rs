@@ -52,11 +52,19 @@ pub async fn handle_key_event(
 
         // Force refresh current label with 'f' key (only when not composing)
         KeyCode::Char('f') if !state_guard.composing => {
-            if !state_guard.loading_messages {
-                state_guard.set_loading_messages(true);
-                drop(state_guard); // Release the lock before spawning
-                spawn_message_fetch(state_arc.clone());
+            // Get label ID for immediate cache loading
+            let label_id = state_guard
+                .get_current_label()
+                .and_then(|label| label.id.clone());
+
+            if let Some(ref label_id) = label_id {
+                // Load from cache immediately for fast display
+                let _ = state_guard.load_messages_from_cache(label_id).await;
             }
+
+            state_guard.set_loading_messages(true);
+            drop(state_guard); // Release the lock before spawning
+            spawn_message_fetch(state_arc.clone());
             Ok(false)
         }
 
@@ -393,10 +401,19 @@ async fn handle_enter_key(
 ) -> Result<bool, Box<dyn std::error::Error>> {
     match state_guard.focused_pane {
         FocusedPane::Labels => {
-            // Select label and switch to messages pane - load in background
+            // Select label and switch to messages pane - load cache immediately, no blocking
             state_guard.reset_pagination();
-            state_guard.set_loading_messages(true);
             state_guard.switch_to_messages_pane();
+
+            // Get label ID for immediate cache loading
+            let label_id = state_guard
+                .get_current_label()
+                .and_then(|label| label.id.clone());
+
+            if let Some(ref label_id) = label_id {
+                // Load from cache immediately for fast display
+                let _ = state_guard.load_messages_from_cache(label_id).await;
+            }
 
             // Load messages in background (cache-first, then API if needed)
             // Release lock before spawning by ending the scope

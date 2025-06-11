@@ -1,4 +1,4 @@
-use crate::background_tasks::spawn_message_fetch_with_cache;
+use crate::background_tasks::{spawn_background_fetch, spawn_message_fetch_with_cache};
 use crate::database::Database;
 use crate::gmail_api::{fetch_labels, try_authenticate};
 use crate::notifications::{
@@ -66,8 +66,7 @@ pub async fn initialize_app(
                     state_guard.selected_label = 0;
                     state_guard.update_label_state();
 
-                    // Load messages for the first label automatically
-                    state_guard.set_loading_messages(true);
+                    // Load messages for the first label automatically - cache first, no blocking
                     drop(state_guard); // Release the lock before spawning
                     spawn_message_fetch_with_cache(state_arc.clone());
                 } else {
@@ -79,7 +78,6 @@ pub async fn initialize_app(
         } else {
             // Cache was loaded successfully, load messages for the selected label
             if !state_guard.labels.is_empty() {
-                state_guard.set_loading_messages(true);
                 drop(state_guard); // Release the lock before spawning
                 spawn_message_fetch_with_cache(state_arc.clone());
             } else {
@@ -106,20 +104,14 @@ pub async fn run_app_loop(
             let mut state_guard = state_arc.write().await;
             match notification {
                 NotificationEvent::NewMessage(_message_id) => {
-                    // Use cache-first approach but also fetch from API in background
-                    if !state_guard.loading_messages {
-                        state_guard.set_loading_messages(true);
-                        drop(state_guard); // Release the lock before spawning
-                        spawn_message_fetch_with_cache(state_arc.clone());
-                    }
+                    // Fetch in background without blocking UI
+                    drop(state_guard); // Release the lock before spawning
+                    spawn_background_fetch(state_arc.clone());
                 }
                 NotificationEvent::MessageUpdated(_message_id) => {
-                    // Use cache-first approach but also fetch from API in background
-                    if !state_guard.loading_messages {
-                        state_guard.set_loading_messages(true);
-                        drop(state_guard); // Release the lock before spawning
-                        spawn_message_fetch_with_cache(state_arc.clone());
-                    }
+                    // Fetch in background without blocking UI
+                    drop(state_guard); // Release the lock before spawning
+                    spawn_background_fetch(state_arc.clone());
                 }
                 NotificationEvent::LabelUpdated(_label_id) => {
                     // Refresh labels from cache first, fallback to API
@@ -138,12 +130,9 @@ pub async fn run_app_loop(
                     }
                 }
                 NotificationEvent::SyncRequired => {
-                    // Use cache-first approach but also fetch from API in background
-                    if !state_guard.loading_messages {
-                        state_guard.set_loading_messages(true);
-                        drop(state_guard); // Release the lock before spawning
-                        spawn_message_fetch_with_cache(state_arc.clone());
-                    }
+                    // Fetch in background without blocking UI
+                    drop(state_guard); // Release the lock before spawning
+                    spawn_background_fetch(state_arc.clone());
                 }
             }
         }
