@@ -47,6 +47,10 @@ The `--release` flag compiles the application with optimizations, resulting in b
 
 ## Troubleshooting
 
+### Help commands
+
+You can always type `?` to see what keys are available in that context
+
 ### macOS Keychain Behavior
 
 **Important for macOS Users**: Each time you compile or run a new build of the application (e.g., with `cargo run` or `cargo build`), macOS will treat it as a different application due to the changed binary signature. This means you will be re-prompted for your keychain password and will need to select "Always Allow" to grant the application access to stored credentials.
